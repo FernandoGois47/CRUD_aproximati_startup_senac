@@ -3,6 +3,7 @@ from tkinter import messagebox, ttk
 from typing import Self
 from usuarioDAO import UsuarioDAO
 from usuario import Usuario
+from portfolioDAO import PortfolioDAO
 
 class App:
     def __init__(self, root, tipo_usuario):
@@ -10,7 +11,7 @@ class App:
         self.dao = UsuarioDAO()
         self.root = root
         self.root.title(f"AproximaTI - Área do {self.tipo_usuario.capitalize()}")
-        self.root.geometry("800x600")
+        self.root.geometry("800x500")
         self.root.configure(bg="#f0f0f0")
 
         # Define a cor do topo conforme o tipo de usuário
@@ -32,21 +33,34 @@ class App:
         menu_frame.pack_propagate(False)
 
         # Botões do menu (simulando abas)
-        tk.Button(menu_frame, text="📋 Meu Cadastro", bg="#d0d0d0", relief="flat", 
-                 font=("Arial", 9), padx=15, pady=5).pack(side="left", padx=2, pady=5)
+        self.btn_cadastro = tk.Button(menu_frame, text="📋 Meu Cadastro", bg="#d0d0d0", relief="flat", 
+                 font=("Arial", 9), padx=15, pady=5, command=self.mostrar_cadastro)
+        self.btn_cadastro.pack(side="left", padx=2, pady=5)
         
         if self.tipo_usuario == "cliente":
-            tk.Button(menu_frame, text="🔍 Buscar Técnicos", bg="#e0e0e0", relief="flat", 
-                     font=("Arial", 9), padx=15, pady=5).pack(side="left", padx=2, pady=5)
+            self.btn_buscar = tk.Button(menu_frame, text="🔍 Buscar Técnicos", bg="#e0e0e0", relief="flat", 
+                     font=("Arial", 9), padx=15, pady=5, command=self.mostrar_busca_tecnicos)
+            self.btn_buscar.pack(side="left", padx=2, pady=5)
             tk.Button(menu_frame, text="⭐ Avaliar Técnico", bg="#e0e0e0", relief="flat", 
                      font=("Arial", 9), padx=15, pady=5).pack(side="left", padx=2, pady=5)
 
-        # Frame principal com scroll
-        main_frame = tk.Frame(root, bg="#f0f0f0")
-        main_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        # Frame principal
+        self.main_frame = tk.Frame(root, bg="#f0f0f0")
+        self.main_frame.pack(fill="both", expand=True, padx=20, pady=10)
 
+        # Criar os frames para as diferentes seções
+        self.criar_frame_cadastro()
+        if self.tipo_usuario == "cliente":
+            self.criar_frame_busca_tecnicos()
+        
+        # Mostrar a seção de cadastro inicialmente
+        self.mostrar_cadastro()
+
+    def criar_frame_cadastro(self):
         # Frame do formulário de cadastro
-        form_frame = tk.LabelFrame(main_frame, text=f"Cadastro do {self.tipo_usuario.capitalize()}", 
+        self.frame_cadastro = tk.Frame(self.main_frame, bg="#f0f0f0")
+        
+        form_frame = tk.LabelFrame(self.frame_cadastro, text=f"Cadastro do {self.tipo_usuario.capitalize()}", 
                                   font=("Arial", 12, "bold"), bg="#f0f0f0", padx=15, pady=10)
         form_frame.pack(fill="x", pady=10)
 
@@ -126,25 +140,110 @@ class App:
         
         tk.Button(btn_frame, text="Deletar", bg="#e74c3c", fg="white", font=("Arial", 10, "bold"),
                  width=12, height=1, command=self.deletar, relief="flat", cursor="hand2").pack(side="left", padx=5)
-        
-        tk.Button(btn_frame, text="Listar Todos", bg="#27ae60", fg="white", font=("Arial", 10, "bold"),
-                 width=12, height=1, command=self.listar, relief="flat", cursor="hand2").pack(side="left", padx=5)
 
-        # Área de resultado
-        result_frame = tk.LabelFrame(main_frame, text="Usuários Cadastrados", 
+    def criar_frame_busca_tecnicos(self):
+        # Frame para busca de técnicos
+        self.frame_busca = tk.Frame(self.main_frame, bg="#f0f0f0")
+        
+        # Seção de filtros
+        filtros_frame = tk.LabelFrame(self.frame_busca, text="Filtros de Busca", 
+                                     font=("Arial", 12, "bold"), bg="#f0f0f0", padx=15, pady=10)
+        filtros_frame.pack(fill="x", pady=10)
+        
+        # Filtro por cidade
+        tk.Label(filtros_frame, text="Cidade:", font=("Arial", 10), bg="#f0f0f0").grid(
+            row=0, column=0, sticky="w", pady=5, padx=5)
+        self.entry_filtro_cidade = tk.Entry(filtros_frame, width=20, font=("Arial", 10))
+        self.entry_filtro_cidade.grid(row=0, column=1, padx=5, pady=5)
+        
+        # Filtro por estado
+        tk.Label(filtros_frame, text="Estado:", font=("Arial", 10), bg="#f0f0f0").grid(
+            row=0, column=2, sticky="w", pady=5, padx=5)
+        self.entry_filtro_estado = tk.Entry(filtros_frame, width=5, font=("Arial", 10))
+        self.entry_filtro_estado.grid(row=0, column=3, padx=5, pady=5)
+        
+        # Botão de buscar
+        tk.Button(filtros_frame, text="🔍 Buscar Técnicos", bg="#27ae60", fg="white", 
+                 font=("Arial", 10, "bold"), width=15, height=1, command=self.buscar_tecnicos,
+                 relief="flat", cursor="hand2").grid(row=0, column=4, padx=15, pady=5)
+        
+        tk.Button(filtros_frame, text="Limpar Filtros", bg="#95a5a6", fg="white", 
+                 font=("Arial", 10, "bold"), width=12, height=1, command=self.limpar_filtros,
+                 relief="flat", cursor="hand2").grid(row=0, column=5, padx=5, pady=5)
+        
+        # Área de resultados dos técnicos
+        result_frame = tk.LabelFrame(self.frame_busca, text="Técnicos Disponíveis", 
                                    font=("Arial", 12, "bold"), bg="#f0f0f0", padx=15, pady=10)
         result_frame.pack(fill="both", expand=True, pady=10)
-
-        # Text widget com scrollbar
+        
+        # Text widget com scrollbar para mostrar técnicos
         text_frame = tk.Frame(result_frame, bg="#f0f0f0")
         text_frame.pack(fill="both", expand=True)
-
-        self.text_resultado = tk.Text(text_frame, height=8, font=("Arial", 10), wrap="word")
-        scrollbar = tk.Scrollbar(text_frame, orient="vertical", command=self.text_resultado.yview)
-        self.text_resultado.configure(yscrollcommand=scrollbar.set)
         
-        self.text_resultado.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
+        self.text_tecnicos = tk.Text(text_frame, height=12, font=("Arial", 10), wrap="word")
+        scrollbar_tecnicos = tk.Scrollbar(text_frame, orient="vertical", command=self.text_tecnicos.yview)
+        self.text_tecnicos.configure(yscrollcommand=scrollbar_tecnicos.set)
+        
+        self.text_tecnicos.pack(side="left", fill="both", expand=True)
+        scrollbar_tecnicos.pack(side="right", fill="y")
+
+    def mostrar_cadastro(self):
+        # Esconde todos os frames
+        if hasattr(self, 'frame_busca'):
+            self.frame_busca.pack_forget()
+        
+        # Mostra o frame de cadastro
+        self.frame_cadastro.pack(fill="both", expand=True)
+        
+        # Atualiza cores dos botões
+        self.btn_cadastro.configure(bg="#d0d0d0")
+        if hasattr(self, 'btn_buscar'):
+            self.btn_buscar.configure(bg="#e0e0e0")
+
+    def mostrar_busca_tecnicos(self):
+        # Esconde todos os frames
+        self.frame_cadastro.pack_forget()
+        
+        # Mostra o frame de busca
+        self.frame_busca.pack(fill="both", expand=True)
+        
+        # Atualiza cores dos botões
+        self.btn_cadastro.configure(bg="#e0e0e0")
+        self.btn_buscar.configure(bg="#d0d0d0")
+        
+        # Carrega todos os técnicos automaticamente
+        self.buscar_tecnicos()
+
+    def buscar_tecnicos(self):
+        cidade_filtro = self.entry_filtro_cidade.get().strip()
+        estado_filtro = self.entry_filtro_estado.get().strip().upper()
+        
+        # Busca técnicos no banco
+        tecnicos = self.dao.buscar_tecnicos(cidade_filtro, estado_filtro)
+        
+        # Limpa a área de resultado
+        self.text_tecnicos.delete("1.0", tk.END)
+        
+        if not tecnicos:
+            self.text_tecnicos.insert(tk.END, "Nenhum técnico encontrado com os filtros informados.\n")
+            return
+        
+        # Exibe os técnicos formatados
+        self.text_tecnicos.insert(tk.END, "=== TÉCNICOS DISPONÍVEIS ===\n\n")
+        for tecnico in tecnicos:
+            self.text_tecnicos.insert(tk.END, f"📧 {tecnico[1]} - {tecnico[2]}\n")
+            if tecnico[3]:  # telefone
+                self.text_tecnicos.insert(tk.END, f"📞 {tecnico[3]}\n")
+            if tecnico[4] and tecnico[5]:  # cidade e estado
+                self.text_tecnicos.insert(tk.END, f"📍 {tecnico[4]}, {tecnico[5]}\n")
+            self.text_tecnicos.insert(tk.END, "-" * 50 + "\n\n")
+        
+        self.text_tecnicos.insert(tk.END, f"Total: {len(tecnicos)} técnicos encontrados")
+
+    def limpar_filtros(self):
+        self.entry_filtro_cidade.delete(0, tk.END)
+        self.entry_filtro_estado.delete(0, tk.END)
+        self.buscar_tecnicos()  # Recarrega todos os técnicos
 
     def criar(self):
         # Coleta todos os dados do formulário
@@ -163,7 +262,7 @@ class App:
 
         # Validação do estado (deve ter 2 caracteres)
         if estado and len(estado) != 2:
-            messagebox.showwarning("Erro!", "Estado deve ter 2 letras (ex: SP, RJ)")
+            messagebox.showwarning("Erro!", "Estado deve ter 2 letras (ex: PR, SC)")
             return
 
         try:
@@ -182,23 +281,6 @@ class App:
                 messagebox.showerror("Erro!", "Este email já está cadastrado!")
             else:
                 messagebox.showerror("Erro!", f"Erro ao cadastrar: {str(e)}")
-
-    def listar(self):
-        # Busca todos os registros do banco
-        registros = self.dao.listar()
-        
-        # Limpa a área de resultado
-        self.text_resultado.delete("1.0", tk.END)
-        
-        if not registros:
-            self.text_resultado.insert(tk.END, "Nenhum registro encontrado.\n")
-            return
-        
-        # Exibe os registros formatados
-        self.text_resultado.insert(tk.END, "=== USUÁRIOS CADASTRADOS ===\n\n")
-        for r in registros:
-            self.text_resultado.insert(tk.END, f"ID: {r[0]} | Nome: {r[1]} | Email: {r[2]}\n")
-        self.text_resultado.insert(tk.END, f"\nTotal: {len(registros)} registros")
 
     def atualizar(self):
         # Coleta todos os dados incluindo ID
@@ -258,6 +340,29 @@ class App:
                 messagebox.showerror("Erro!", "ID deve ser um número válido!")
             except Exception as e:
                 messagebox.showerror("Erro!", f"Erro ao deletar: {str(e)}")
+
+
+    # Função para salvar o portfólio do técnico
+    def salvar_portfolio(id_tecnico, text_widget):
+        descricao = text_widget.get("1.0", tk.END).strip()
+        if descricao:
+            PortfolioDAO().salvar(id_tecnico, descricao)
+            tk.messagebox.showinfo("Sucesso", "Portfólio salvo com sucesso!")
+        else:
+            tk.messagebox.showwarning("Atenção", "Digite sua experiência antes de salvar.")
+
+    # # Exemplo de frame para cadastro do portfólio
+    # frame = tk.Frame(self.root)
+    # frame.pack()
+
+    # tk.Label(frame, text="Conte sobre suas experiências:").pack()
+    # text_portfolio = tk.Text(frame, width=60, height=10)
+    # text_portfolio.pack()
+
+    # btn_salvar = tk.Button(frame, text="Salvar", command=lambda: salvar_portfolio(id_tecnico, text_portfolio))
+    # btn_salvar.pack()
+    
+
 
     def limpar_campos(self):
         # Limpa todos os campos do formulário
