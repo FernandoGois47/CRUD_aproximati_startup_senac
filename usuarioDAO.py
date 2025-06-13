@@ -49,6 +49,38 @@ class UsuarioDAO:
             if conn:
                 conn.close()
 
+    def buscar_tecnicos(self, cidade_filtro="", estado_filtro=""):
+        try:
+            conn = Database.conectar()
+            cursor = conn.cursor()
+            
+            # SQL base para buscar apenas técnicos
+            sql = "SELECT id, nome, email, telefone, cidade, estado FROM usuarios WHERE tipo = 'tecnico'"
+            valores = []
+            
+            # Adiciona filtros se informados
+            if cidade_filtro:
+                sql += " AND cidade LIKE %s"
+                valores.append(f"%{cidade_filtro}%")
+            
+            if estado_filtro:
+                sql += " AND estado = %s"
+                valores.append(estado_filtro)
+            
+            sql += " ORDER BY nome"
+            
+            cursor.execute(sql, valores)
+            resultados = cursor.fetchall()
+            return resultados
+        except Exception as e:
+            print(f"Erro ao buscar técnicos: {e}")
+            return []
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
     def atualizar(self, usuario: Usuario):
         try:
             conn = Database.conectar()
