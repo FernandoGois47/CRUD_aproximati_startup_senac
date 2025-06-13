@@ -1,6 +1,7 @@
 import tkinter as tk
 from app import App
 
+
 def escolher_usuario(root_principal):
     escolha = tk.Toplevel(root_principal)
     escolha.title("AproximaTI - Sistema de Conectividade")
@@ -46,6 +47,7 @@ def escolher_usuario(root_principal):
                            width=20, height=3, command=abrir_tecnico,
                            relief="flat", cursor="hand2")
     btn_tecnico.pack(pady=10)
+
 
 def abrir_crud(tipo_usuario, root_principal):
     crud_window = tk.Toplevel(root_principal)
