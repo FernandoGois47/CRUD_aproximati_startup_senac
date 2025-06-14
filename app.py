@@ -9,6 +9,7 @@ class App:
     def __init__(self, root, tipo_usuario):
         self.tipo_usuario = tipo_usuario
         self.dao = UsuarioDAO()
+        self.portfolio_dao = PortfolioDAO()
         self.root = root
         self.root.title(f"AproximaTI - Área do {self.tipo_usuario.capitalize()}")
         self.root.geometry("800x500")
@@ -43,6 +44,13 @@ class App:
             self.btn_buscar.pack(side="left", padx=2, pady=5)
             tk.Button(menu_frame, text="⭐ Avaliar Técnico", bg="#e0e0e0", relief="flat", 
                      font=("Arial", 9), padx=15, pady=5).pack(side="left", padx=2, pady=5)
+        
+        if self.tipo_usuario == "tecnico":
+            self.btn_portfolio = tk.Button(menu_frame, text="📁 Meu Portfólio", bg="#e0e0e0", relief="flat", 
+                     font=("Arial", 9), padx=15, pady=5, command=self.mostrar_portfolio)
+            self.btn_portfolio.pack(side="left", padx=2, pady=5)
+            tk.Button(menu_frame, text="⭐ Minhas Avaliações", bg="#e0e0e0", relief="flat", 
+                     font=("Arial", 9), padx=15, pady=5).pack(side="left", padx=2, pady=5)
 
         # Frame principal
         self.main_frame = tk.Frame(root, bg="#f0f0f0")
@@ -52,6 +60,8 @@ class App:
         self.criar_frame_cadastro()
         if self.tipo_usuario == "cliente":
             self.criar_frame_busca_tecnicos()
+        if self.tipo_usuario == "tecnico":
+            self.criar_frame_portfolio()
         
         # Mostrar a seção de cadastro inicialmente
         self.mostrar_cadastro()
@@ -187,10 +197,53 @@ class App:
         self.text_tecnicos.pack(side="left", fill="both", expand=True)
         scrollbar_tecnicos.pack(side="right", fill="y")
 
+    def criar_frame_portfolio(self):
+        # Frame para o portfólio do técnico
+        self.frame_portfolio = tk.Frame(self.main_frame, bg="#f0f0f0")
+        
+        # Seção do portfólio
+        portfolio_frame = tk.LabelFrame(self.frame_portfolio, text="Descrição do Portfólio", 
+                                       font=("Arial", 12, "bold"), bg="#f0f0f0", padx=25, pady=10)
+        portfolio_frame.pack(fill="both", expand=True, pady=10)
+        
+        # ID do técnico
+        tk.Label(portfolio_frame, text="ID do Técnico:", font=("Arial", 10), bg="#f0f0f0").pack(anchor="w", pady=5)
+        self.entry_tecnico_id = tk.Entry(portfolio_frame, width=20, font=("Arial", 10))
+        self.entry_tecnico_id.pack(anchor="w", pady=5)
+        
+        # Descrição do portfólio
+        tk.Label(portfolio_frame, text="Descrição do Portfólio:", font=("Arial", 10), bg="#f0f0f0").pack(anchor="w", pady=(15, 5))
+        
+        # Frame para o text widget com scrollbar
+        text_frame = tk.Frame(portfolio_frame, bg="#f0f0f0")
+        text_frame.pack(fill="both", expand=True, pady=5)
+        
+        self.text_portfolio = tk.Text(text_frame, height=5, font=("Arial", 10), wrap="word")
+        scrollbar_portfolio = tk.Scrollbar(text_frame, orient="vertical", command=self.text_portfolio.yview)
+        self.text_portfolio.configure(yscrollcommand=scrollbar_portfolio.set)
+        
+        self.text_portfolio.pack(side="left", fill="both", expand=True)
+        scrollbar_portfolio.pack(side="right", fill="y")
+        
+        # Frame para botões
+        btn_frame = tk.Frame(portfolio_frame, bg="#f0f0f0")
+        btn_frame.pack(pady=15)
+        
+        # Botões
+        tk.Button(btn_frame, text="💾 Salvar Portfólio", bg="#3498db", fg="white", 
+                 font=("Arial", 10, "bold"), width=15, height=1, command=self.salvar_portfolio,
+                 relief="flat", cursor="hand2").pack(side="left", padx=5)
+        
+        tk.Button(btn_frame, text="📄 Carregar Portfólio", bg="#9b59b6", fg="white", 
+                 font=("Arial", 10, "bold"), width=15, height=1, command=self.carregar_portfolio,
+                 relief="flat", cursor="hand2").pack(side="left", padx=5)
+
     def mostrar_cadastro(self):
         # Esconde todos os frames
         if hasattr(self, 'frame_busca'):
             self.frame_busca.pack_forget()
+        if hasattr(self, 'frame_portfolio'):
+            self.frame_portfolio.pack_forget()
         
         # Mostra o frame de cadastro
         self.frame_cadastro.pack(fill="both", expand=True)
@@ -199,6 +252,8 @@ class App:
         self.btn_cadastro.configure(bg="#d0d0d0")
         if hasattr(self, 'btn_buscar'):
             self.btn_buscar.configure(bg="#e0e0e0")
+        if hasattr(self, 'btn_portfolio'):
+            self.btn_portfolio.configure(bg="#e0e0e0")
 
     def mostrar_busca_tecnicos(self):
         # Esconde todos os frames
@@ -213,6 +268,62 @@ class App:
         
         # Carrega todos os técnicos automaticamente
         self.buscar_tecnicos()
+
+    def mostrar_portfolio(self):
+        # Esconde todos os frames
+        self.frame_cadastro.pack_forget()
+        
+        # Mostra o frame de portfólio
+        self.frame_portfolio.pack(fill="both", expand=True)
+        
+        # Atualiza cores dos botões
+        self.btn_cadastro.configure(bg="#e0e0e0")
+        self.btn_portfolio.configure(bg="#d0d0d0")
+
+    def salvar_portfolio(self):
+        tecnico_id = self.entry_tecnico_id.get().strip()
+        descricao = self.text_portfolio.get("1.0", tk.END).strip()
+        
+        if not tecnico_id:
+            messagebox.showwarning("Erro!", "Informe o ID do técnico!")
+            return
+            
+        if not descricao:
+            messagebox.showwarning("Erro!", "Digite sua experiência antes de salvar!")
+            return
+        
+        try:
+            self.portfolio_dao.salvar(int(tecnico_id), descricao)
+            messagebox.showinfo("Sucesso!", "Portfólio salvo com sucesso!")
+        except ValueError:
+            messagebox.showerror("Erro!", "ID deve ser um número válido!")
+        except Exception as e:
+            messagebox.showerror("Erro!", f"Erro ao salvar portfólio: {str(e)}")
+
+    def carregar_portfolio(self):
+        tecnico_id = self.entry_tecnico_id.get().strip()
+        
+        if not tecnico_id:
+            messagebox.showwarning("Erro!", "Informe o ID do técnico!")
+            return
+        
+        try:
+            portfolios = self.portfolio_dao.carregar_por_tecnico(int(tecnico_id))
+            
+            # Limpa o texto atual
+            self.text_portfolio.delete("1.0", tk.END)
+            
+            if portfolios:
+                # Carrega o portfólio mais recente
+                self.text_portfolio.insert(tk.END, portfolios[0][0])
+                messagebox.showinfo("Sucesso!", "Portfólio carregado com sucesso!")
+            else:
+                messagebox.showinfo("Informação", "Nenhum portfólio encontrado para este técnico.")
+                
+        except ValueError:
+            messagebox.showerror("Erro!", "ID deve ser um número válido!")
+        except Exception as e:
+            messagebox.showerror("Erro!", f"Erro ao carregar portfólio: {str(e)}")
 
     def buscar_tecnicos(self):
         cidade_filtro = self.entry_filtro_cidade.get().strip()
@@ -340,29 +451,6 @@ class App:
                 messagebox.showerror("Erro!", "ID deve ser um número válido!")
             except Exception as e:
                 messagebox.showerror("Erro!", f"Erro ao deletar: {str(e)}")
-
-
-    # Função para salvar o portfólio do técnico
-    def salvar_portfolio(id_tecnico, text_widget):
-        descricao = text_widget.get("1.0", tk.END).strip()
-        if descricao:
-            PortfolioDAO().salvar(id_tecnico, descricao)
-            tk.messagebox.showinfo("Sucesso", "Portfólio salvo com sucesso!")
-        else:
-            tk.messagebox.showwarning("Atenção", "Digite sua experiência antes de salvar.")
-
-    # # Exemplo de frame para cadastro do portfólio
-    # frame = tk.Frame(self.root)
-    # frame.pack()
-
-    # tk.Label(frame, text="Conte sobre suas experiências:").pack()
-    # text_portfolio = tk.Text(frame, width=60, height=10)
-    # text_portfolio.pack()
-
-    # btn_salvar = tk.Button(frame, text="Salvar", command=lambda: salvar_portfolio(id_tecnico, text_portfolio))
-    # btn_salvar.pack()
-    
-
 
     def limpar_campos(self):
         # Limpa todos os campos do formulário
