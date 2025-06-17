@@ -380,11 +380,13 @@ class App:
             # Cria objeto usuario com todos os dados
             usuario = Usuario(nome=nome, email=email, senha=senha, tipo=self.tipo_usuario,
                             telefone=telefone, cidade=cidade, estado=estado)
-            
-            # Salva no banco de dados
-            self.dao.criar(usuario)
-            messagebox.showinfo("Sucesso!", f"{self.tipo_usuario.capitalize()} cadastrado com sucesso!")
-            self.limpar_campos()
+
+            # Salva no banco de dados e recupera o ID
+            id_gerado = self.dao.criar(usuario)
+
+            # Mostra mensagem com o ID
+            messagebox.showinfo("Sucesso!", f"{self.tipo_usuario.capitalize()} cadastrado com sucesso!\nID: {id_gerado}")
+
             
         except Exception as e:
             # Trata erros específicos
