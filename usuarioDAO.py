@@ -22,6 +22,9 @@ class UsuarioDAO:
             )
             cursor.execute(sql, valores)
             conn.commit()
+            id_gerado = cursor.lastrowid  # <- AQUI PEGA O ID GERADO
+            return id_gerado             # <- E AQUI RETORNA O ID
+
         except Exception as e:
             print(f"Erro ao criar usuário: {e}")
             raise  # Repassa o erro para a interface tratar
