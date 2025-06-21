@@ -388,7 +388,9 @@ class App:
             messagebox.showinfo("Sucesso!", f"{self.tipo_usuario.capitalize()} cadastrado com sucesso!\nID: {id_gerado}")
 
             
-        except Exception as e:
+        except ValueError as ve:  # ← ADICIONE ESTA LINHA
+            messagebox.showerror("Erro de Validação!", str(ve))  # ← ADICIONE ESTA LINHA
+        except Exception as e:  # ← ESTA LINHA JÁ EXISTE
             # Trata erros específicos
             if "Duplicate entry" in str(e):
                 messagebox.showerror("Erro!", "Este email já está cadastrado!")
@@ -426,8 +428,11 @@ class App:
             messagebox.showinfo("Sucesso!", "Usuário atualizado com sucesso!")
             self.limpar_campos()
             
-        except ValueError:
-            messagebox.showerror("Erro!", "ID deve ser um número válido!")
+        except ValueError as ve:
+            if "ID deve ser um número válido" in str(ve):
+                messagebox.showerror("Erro!", "ID deve ser um número válido!")
+            else:
+                messagebox.showerror("Erro de Validação!", str(ve))
         except Exception as e:
             if "Duplicate entry" in str(e):
                 messagebox.showerror("Erro!", "Este email já está cadastrado!")
