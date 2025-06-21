@@ -13,10 +13,10 @@ class UsuarioDAO:
             """
             valores = (
                 usuario.nome,
-                usuario.email,
-                usuario.senha,
+                usuario.get_email(),
+                usuario.get_senha(),
                 usuario.tipo,
-                usuario.telefone or "",  # Se vazio, insere string vazia
+                usuario.get_telefone() or "",  # Se vazio, insere string vazia
                 usuario.cidade or "",
                 usuario.estado or ""
             )
@@ -95,10 +95,10 @@ class UsuarioDAO:
             """
             valores = (
                 usuario.nome,
-                usuario.email,
-                usuario.senha,
+                usuario.get_email(),
+                usuario.get_senha(),
                 usuario.tipo,
-                usuario.telefone or "",
+                usuario.get_telefone() or "",
                 usuario.cidade or "",
                 usuario.estado or "",
                 usuario.id
